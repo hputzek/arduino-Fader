@@ -5,10 +5,11 @@
  *      Author: jeremy
  */
 
-#include "LEDFader.h"
+#include "Fader.h"
 
-LEDFader::LEDFader(uint8_t pwm_pin) {
-  pin = pwm_pin;
+Fader::Fader(byte fader_id, callback_function callback_func) {
+  id = fader_id;
+  callback = callback_func;
   color = 0;
   to_color = 0;
   last_step_time = 0;
@@ -18,49 +19,41 @@ LEDFader::LEDFader(uint8_t pwm_pin) {
   curve = (curve_function)0;
 }
 
-void LEDFader::set_pin(uint8_t pwm_pin) {
-  pin = pwm_pin;
-}
-uint8_t LEDFader::get_pin(){
-  return pin;
-}
 
-
-void LEDFader::set_value(int value) {
-  if (!pin) return;
+void Fader::set_value(int value) {
   color = (uint8_t)constrain(value, 0, 255);
   if (curve)
-   analogWrite(pin, curve(color));
+   callback(id, curve(color));
   else
-  analogWrite(pin, color);
+   callback(id, color);
 }
 
-uint8_t LEDFader::get_value() {
+uint8_t Fader::get_value() {
   return color;
 }
 
-uint8_t LEDFader::get_target_value() {
+uint8_t Fader::get_target_value() {
   return to_color;
 }
-    
+
 // Set curve to transform output
-void LEDFader::set_curve(curve_function c) {
+void Fader::set_curve(curve_function c) {
  curve = c;
 }
 
 // Get the current curve function pointer
-LEDFader::curve_function LEDFader::get_curve() {
+Fader::curve_function Fader::get_curve() {
  return curve;
 }
 
-void LEDFader::slower(int by) {
+void Fader::slower(int by) {
   float cached_percent = percent_done;
   duration += by;
   fade(to_color, duration);
   percent_done = cached_percent;
 }
 
-void LEDFader::faster(int by) {
+void Fader::faster(int by) {
   float cached_percent = percent_done;
 
   // Ends the fade
@@ -75,14 +68,9 @@ void LEDFader::faster(int by) {
   percent_done = cached_percent;
 }
 
-void LEDFader::fade(uint8_t value, unsigned int time) {
+void Fader::fade(uint8_t value, unsigned int time) {
   stop_fade();
   percent_done = 0;
-
-  // No pin defined
-  if (!pin) {
-    return;
-  }
 
   // Color hasn't changed
   if (value == color) {
@@ -108,29 +96,22 @@ void LEDFader::fade(uint8_t value, unsigned int time) {
   last_step_time = millis();
 }
 
-bool LEDFader::is_fading() {
-  if (!pin)
-    return false;
+bool Fader::is_fading() {
   if (duration > 0)
     return true;
   return false;
 }
 
-void LEDFader::stop_fade() {
+void Fader::stop_fade() {
   percent_done = 100;
   duration = 0;
 }
 
-uint8_t LEDFader::get_progress() {
+uint8_t Fader::get_progress() {
   return round(percent_done);
 }
 
-bool LEDFader::update() {
-
-  // No pin defined
-  if (!pin) {
-    return false;
-  }
+bool Fader::update() {
 
   // No fade
   if (duration == 0) {

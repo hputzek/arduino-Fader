@@ -7,19 +7,19 @@
 
 #include "Arduino.h"
 
-#ifndef LEDFader_H_
-#define LEDFader_H_
+#ifndef Fader_H_
+#define Fader_H_
 
 // The minimum time (milliseconds) the program will wait between LED adjustments
 // adjust this to modify performance.
 #define MIN_INTERVAL 20
 
-class LEDFader {
+class Fader {
 public:
   // Who likes dealing with function pointers? (Ok, I do, but no one else does)
   typedef uint8_t (*curve_function)(uint8_t);
+  typedef void (*callback_function)(byte, uint8_t);
 private:
-  uint8_t pin;
   unsigned long last_step_time;
   unsigned int interval;
   uint8_t color;
@@ -27,15 +27,13 @@ private:
   unsigned int duration;
   float percent_done;
   curve_function curve;
+  callback_function callback;
+  byte id;
 
   public:
 
     // Create a new LED Fader for a pin
-    LEDFader(uint8_t pwm_pin=0);
-
-    // Set the PWM pin that the LED is connected to
-    void set_pin(uint8_t pwm_pin);
-    uint8_t get_pin();
+    Fader(byte fader_id, callback_function);
 
     // Set an LED to an absolute PWM value
     void set_value(int pwm);
@@ -45,10 +43,10 @@ private:
 
     // Get the PWM value we're fading to
     uint8_t get_target_value();
-    
+
     // Set curve to transform output
     void set_curve(curve_function);
-    
+
     // Get the current curve function pointer
     curve_function get_curve();
 
@@ -76,4 +74,4 @@ private:
     uint8_t get_progress();
 };
 
-#endif /* LEDFader_H_ */
+#endif /* Fader_H_ */
